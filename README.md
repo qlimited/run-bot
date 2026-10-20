@@ -9,8 +9,8 @@ GUI สำหรับควบคุม CookieRun Classic Bot หลายอ�
 ต้องมี Python, ADB ใน `PATH` และอุปกรณ์ที่ตั้งความละเอียดจอ 1280 × 720
 
 ```bash
-git clone --recurse-submodules https://github.com/qlimited/cookierun-classic-bot-ui.git
-cd cookierun-classic-bot-ui
+git clone --recurse-submodules https://github.com/qlimited/run-bot.git
+cd run-bot
 python3.9 -m pip install -r requirements.txt
 python3.9 gui/server.py
 ```

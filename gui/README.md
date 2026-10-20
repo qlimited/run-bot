@@ -3,7 +3,7 @@
 Local browser dashboard for the existing Python bot. No additional GUI package is required.
 
 ```bash
-cd /path/to/cookierun-classic-bot-ui
+cd /path/to/run-bot
 python3.9 gui/server.py
 ```
 
