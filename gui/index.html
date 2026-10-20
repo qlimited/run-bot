@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10131d">
+  <title>CookieRun Bot · Control Room</title>
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/devices.css">
+  <link rel="stylesheet" href="/delete.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-icon">C<span>✦</span></div><div><strong>COOKIE<span>RUN</span></strong><small>BOT CONTROL ROOM</small></div></div>
+      <div class="nav-heading">WORKSPACE</div>
+      <a class="nav-item active" href="#overview"><span class="nav-icon">◈</span> Dashboard <span class="nav-indicator"></span></a>
+      <a class="nav-item" href="#devices"><span class="nav-icon">▣</span> อุปกรณ์</a>
+      <a class="nav-item" href="#alerts"><span class="nav-icon">♢</span> แจ้งเตือน <span id="alertNavCount" class="alert-nav-count" hidden>0</span></a>
+      <a class="nav-item" href="#screen"><span class="nav-icon">◫</span> จอสด</a>
+      <a class="nav-item" href="#setup"><span class="nav-icon">⚙</span> ตั้งค่าการเล่น</a>
+      <a class="nav-item" href="#activity"><span class="nav-icon">▤</span> Activity log</a>
+      <div class="sidebar-bottom">
+        <div class="sidebar-note"><div class="note-mark">✦</div><strong>Ready for a run?</strong><p>เชื่อมต่อ ADB และตั้งค่าหน้าจออุปกรณ์เป็น 1280 × 720</p></div>
+        <div class="sidebar-footer"><span class="online-dot"></span> LOCAL DASHBOARD <span>v1.0</span></div>
+      </div>
+    </aside>
+
+    <main id="overview" class="main">
+      <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> Dashboard</div><div class="topbar-right"><span class="local-pill"><i></i> LOCAL MODE</span><span id="clock" class="clock">--:--</span><div class="avatar">CR</div></div></header>
+
+      <div class="content">
+        <div class="page-heading"><div><div class="eyebrow">CONTROL CENTER <span>✦</span></div><h1>Bot Dashboard</h1><p>จัดการการทำงานของ CookieRun Classic Bot ได้จากที่เดียว</p></div><div class="heading-badge">✦ <span>CLASSIC EDITION</span></div></div>
+
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="hero-glow"></div><div class="hero-grid"></div>
+          <div class="hero-content"><div class="hero-kicker"><span class="sparkle">✦</span> AUTOMATION CONTROL</div><h2 id="hero-title">พร้อมออกวิ่ง<br><em>กันหรือยัง?</em></h2><p>เลือกอุปกรณ์และการตั้งค่า แล้วเริ่ม Bot แยกแต่ละเครื่อง</p><div class="hero-actions"><button id="startButton" class="primary-button" type="button"><span class="button-icon">▶</span><span>เริ่ม Bot</span><span class="button-arrow">↗</span></button><button id="stopButton" class="secondary-button" type="button" disabled><span>■</span> หยุด Bot</button></div></div>
+          <div class="cookie-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="floating-star star-one">✦</div><div class="floating-star star-two">✦</div><div class="floating-star star-three">✧</div><div class="cookie"><div class="cookie-shine"></div><span class="chip chip-one"></span><span class="chip chip-two"></span><span class="chip chip-three"></span><span class="chip chip-four"></span><span class="chip chip-five"></span><span class="chip chip-six"></span><span class="eye eye-one"></span><span class="eye eye-two"></span><span class="smile"></span></div><div class="cookie-shadow"></div></div>
+        </section>
+
+        <section id="devices" class="panel devices-panel"><div class="devices-heading"><div><div class="panel-overline">DEVICE FLEET</div><h3>ภาพรวมทุกเครื่อง <span id="deviceCount" class="count-pill">1</span></h3><p>ภาพย่อ สถานะ ADB และด่านล่าสุดของทุกเครื่อง · เลือกการ์ดเพื่อดูรายละเอียด</p></div><button id="showAddDevice" class="add-device-button" type="button">＋ เพิ่มอุปกรณ์</button></div><div id="deviceList" class="device-list"></div><div id="deviceEmpty" class="empty-device" hidden><span>▣</span><strong>ยังไม่มีอุปกรณ์</strong><small>กด “เพิ่มอุปกรณ์” เพื่อเริ่มใช้งาน</small></div><form id="addDeviceForm" class="add-device-form" hidden><div class="add-form-title">เพิ่มอุปกรณ์ ADB</div><div class="add-form-fields"><label>ชื่ออุปกรณ์<input id="newDeviceName" type="text" maxlength="40" placeholder="เช่น เครื่องที่ 2"></label><label>Device IP / Host<input id="newDeviceIp" type="text" required placeholder="192.168.1.10" autocomplete="off" spellcheck="false"></label><label>ADB Port<input id="newDevicePort" type="number" required min="1" max="65535" value="5555"></label></div><div class="add-form-actions"><button id="cancelAddDevice" class="text-button" type="button">ยกเลิก</button><button class="save-device-button" type="submit">เพิ่มอุปกรณ์</button></div></form></section>
+
+        <section id="alerts" class="panel alerts-panel" aria-labelledby="alertsTitle"><div class="alerts-heading"><div><div class="panel-overline">HEALTH MONITOR</div><h3 id="alertsTitle">แจ้งเตือน <span id="activeIssueCount" class="count-pill">0</span></h3><p>ติดตามการเชื่อมต่อ Bot และสถานะที่ต้องตรวจด้วยตัวเอง</p></div><button id="clearAlertsButton" class="text-button" type="button" disabled>ล้างประวัติ</button></div><div id="activeIssues" class="active-issues"></div><div id="alertList" class="alert-list"></div><div id="alertEmpty" class="alert-empty">ยังไม่มีเหตุการณ์ที่ต้องแจ้งเตือน</div></section>
+
+        <section id="screen" class="panel screen-panel" aria-labelledby="screenTitle"><div class="screen-heading"><div><div class="panel-overline">DEVICE SCREEN</div><h3 id="screenTitle">จอสด <span id="screenDeviceName">—</span></h3><p>ภาพจาก ADB รีเฟรชประมาณทุก 1 วินาที · ไม่มีเสียง</p></div><button id="screenToggle" class="screen-toggle" type="button" disabled>▶ ดูจอสด</button></div><div class="screen-viewport"><canvas id="screenImage" role="img" aria-label="ภาพหน้าจออุปกรณ์ที่เลือก" hidden></canvas><div id="screenPlaceholder" class="screen-placeholder"><span>◫</span><strong id="screenMessage">เลือกอุปกรณ์เพื่อดูจอสด</strong><small>กด “ดูจอสด” เมื่อเชื่อมต่อ ADB แล้ว</small></div><div id="screenIndicator" class="screen-indicator" hidden><i></i> LIVE PREVIEW</div></div><div class="screen-footer"><span id="screenStatus">ยังไม่ได้เปิดดูจอ</span><span>เฉพาะเครื่องที่เลือก · พักภาพเมื่อซ่อนแท็บ</span></div></section>
+
+        <div class="stat-grid">
+          <article class="stat-card"><div class="stat-icon yellow">◉</div><div class="stat-label">BOT STATUS</div><div id="statusLabel" class="stat-value">พร้อมใช้งาน</div><div id="statusDetail" class="stat-foot"><span class="mini-dot"></span> รอเริ่มการทำงาน</div></article>
+          <article class="stat-card"><div class="stat-icon purple">▣</div><div class="stat-label">DEVICE</div><div id="deviceLabel" class="stat-value mono">—</div><div class="stat-foot">เชื่อมต่อผ่าน Android Debug Bridge</div></article>
+          <article class="stat-card"><div class="stat-icon pink">◇</div><div class="stat-label">CURRENT STAGE</div><div id="stageLabel" class="stat-value">—</div><div class="stat-foot">อัปเดตจาก log แบบอัตโนมัติ</div></article>
+          <article class="stat-card"><div class="stat-icon blue">◷</div><div class="stat-label">RUN TIME</div><div id="runtimeLabel" class="stat-value mono">00:00:00</div><div class="stat-foot">เวลาทำงานในรอบนี้</div></article>
+        </div>
+
+        <div class="lower-grid">
+          <section id="setup" class="panel settings-panel"><div class="panel-heading"><div><div class="panel-overline">CONFIGURATION</div><h3>ตั้งค่าการเล่น</h3><p>ตัวเลือกสำหรับอุปกรณ์ที่เลือกอยู่</p></div><div class="panel-heading-icon">⚙</div></div>
+            <div class="section-title"><span class="section-icon">⌁</span> อุปกรณ์ที่เลือก</div>
+            <div class="selected-device-box"><div><strong id="selectedDeviceName">—</strong><small id="selectedDeviceSerial">—</small></div><span id="selectedAdbStatus" class="selected-adb-status">ยังไม่เชื่อมต่อ</span></div><div class="device-actions"><button id="connectButton" class="outline-button" type="button">⌁ เชื่อมต่อ ADB</button><button id="removeButton" class="text-button danger" type="button">ลบอุปกรณ์</button></div>
+            <div class="resolution-tip"><span>▣</span><div><strong>หน้าจอ 1280 × 720</strong><small>Bot ใช้ตำแหน่งบนหน้าจอตามความละเอียดนี้</small></div></div>
+            <div class="divider"></div><div class="section-title"><span class="section-icon">✦</span> ตัวเลือก Bot</div>
+            <label class="option-row"><span class="option-symbol amber">⚡</span><span class="option-text"><strong>Fast Start</strong><small>ซื้อและใช้ Fast Start อัตโนมัติ</small></span><input id="fastStart" type="checkbox"><span class="switch"></span></label>
+            <label class="option-row"><span class="option-symbol rose">◕</span><span class="option-text"><strong>Cookie Relay</strong><small>ซื้อและใช้ Cookie Relay อัตโนมัติ</small></span><input id="cookieRelay" type="checkbox"><span class="switch"></span></label>
+            <label class="option-row"><span class="option-symbol violet">✧</span><span class="option-text"><strong>Desired Random Boost</strong><small>เลือก Boost ที่ตั้งไว้ในเกม</small></span><input id="randomBoost" type="checkbox"><span class="switch"></span></label>
+            <label id="boostWrap" class="boost-select-wrap" hidden>Boost ที่ต้องการ<select id="boostIndex"><option value="1">Double Coins</option><option value="2">+15% Score Bonus</option><option value="3">-15% HP Drain</option><option value="4">Revive Once with 80 HP</option><option value="5">70% Crush Chance</option><option value="6">+17% Base Speed</option><option value="7">Gold Coin Magic</option><option value="8">-30% Collision Damage</option><option value="9">+20% HP from Potions</option><option value="10">Magnetic Aura</option><option value="11">2 Pit Lifts</option></select></label>
+            <label class="option-row"><span class="option-symbol mint">♢</span><span class="option-text"><strong>Detect Relic</strong><small>ตรวจจับ เปิด และรับ Relic</small></span><input id="detectRelic" type="checkbox"><span class="switch"></span></label>
+          </section>
+
+          <section id="activity" class="panel activity-panel"><div class="panel-heading"><div><div class="panel-overline">LIVE ACTIVITY</div><h3>Activity log</h3><p>ติดตามเหตุการณ์จาก Bot แบบเรียลไทม์</p></div><span id="liveBadge" class="live-badge"><i></i> STANDBY</span></div><div id="logList" class="log-list" role="log" aria-live="polite"><div class="empty-log"><div>⌁</div><strong>ยังไม่มีกิจกรรม</strong><span>กด “เริ่ม Bot” เพื่อดูสถานะที่นี่</span></div></div><div class="log-footer"><span><i></i> AUTO REFRESH</span><span id="eventCount">0 EVENTS</span></div></section>
+        </div>
+        <footer class="page-footer">COOKIE RUN CLASSIC BOT <span>·</span> LOCAL CONTROL ROOM <span>✦</span></footer>
+      </div>
+    </main>
+  </div>
+  <div id="removeDialog" class="dialog-backdrop" role="dialog" aria-modal="true" aria-labelledby="removeDialogTitle" hidden><div class="dialog-card"><div class="dialog-icon">×</div><h3 id="removeDialogTitle">ลบอุปกรณ์นี้?</h3><p id="removeDialogText"></p><div class="dialog-actions"><button id="cancelRemoveButton" class="text-button" type="button">ยกเลิก</button><button id="confirmRemoveButton" class="delete-button" type="button">ลบอุปกรณ์</button></div></div></div>
+  <div id="toast" class="toast" role="alert" hidden></div>
+</body>
+</html>
