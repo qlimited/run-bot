@@ -1,0 +1,4 @@
+*.sh text eol=lf
+*.command text eol=lf
+tests/fake_adb text eol=lf
+*.bat text eol=crlf

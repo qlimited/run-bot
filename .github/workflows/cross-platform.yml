@@ -1,0 +1,37 @@
+name: cross-platform
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python: ["3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Setup (macOS, Linux)
+        if: runner.os != 'Windows'
+        run: ./setup.sh
+      - name: Smoke test (macOS, Linux)
+        if: runner.os != 'Windows'
+        run: env/bin/python tests/smoke_test.py
+
+      - name: Setup (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: setup.bat
+      - name: Smoke test (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: env\Scripts\python.exe tests\smoke_test.py
