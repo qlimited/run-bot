@@ -1,4 +1,4 @@
-"""Local multi-device dashboard for the CookieRun Classic bot submodule."""
+"""Local multi-device dashboard for the existing CookieRun Classic bot."""
 
 from __future__ import annotations
 
@@ -22,12 +22,10 @@ from urllib.parse import parse_qs, urlsplit
 
 GUI_DIR = Path(__file__).resolve().parent
 PROJECT_DIR = GUI_DIR.parent
-BOT_DIR = PROJECT_DIR / "bot"
-DATA_FILE = GUI_DIR / "devices.json"
-if not (BOT_DIR / "main.py").is_file():
-    raise SystemExit("Bot submodule is missing. Run: git submodule update --init")
-sys.path.insert(0, str(BOT_DIR))
+DATA_FILE = Path(os.environ.get("COOKIERUN_DEVICES_FILE") or GUI_DIR / "devices.json")
+sys.path.insert(0, str(PROJECT_DIR))
 import config  # noqa: E402
+from adb import adb_executable  # noqa: E402
 
 
 ASSETS = {
@@ -42,6 +40,41 @@ STAGE_RE = re.compile(r"Detected Stage: ([A-Z_]+)")
 ID_RE = re.compile(r"^[a-f0-9]{32}$")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 MAX_SCREEN_BYTES = 8 * 1024 * 1024
+
+
+if sys.platform == "win32":
+    def spawn_group(args, **kwargs):
+        return subprocess.Popen(args, creationflags=subprocess.CREATE_NEW_PROCESS_GROUP, **kwargs)
+
+    def interrupt_group(process):
+        try:
+            process.send_signal(signal.CTRL_BREAK_EVENT)
+        except OSError:
+            pass
+
+    def terminate_group(process):
+        process.terminate()
+
+    def kill_group(process):
+        process.kill()
+else:
+    def spawn_group(args, **kwargs):
+        return subprocess.Popen(args, start_new_session=True, **kwargs)
+
+    def _signal_group(process, sig):
+        try:
+            os.killpg(process.pid, sig)
+        except ProcessLookupError:
+            pass
+
+    def interrupt_group(process):
+        _signal_group(process, signal.SIGINT)
+
+    def terminate_group(process):
+        _signal_group(process, signal.SIGTERM)
+
+    def kill_group(process):
+        _signal_group(process, signal.SIGKILL)
 
 
 def validate_endpoint(ip_value, port_value):
@@ -63,7 +96,7 @@ def validate_endpoint(ip_value, port_value):
 def adb_device_states():
     """Read ADB status without connecting or launching the game."""
     try:
-        result = subprocess.run(["adb", "devices"], capture_output=True, text=True, timeout=4, check=False)
+        result = subprocess.run([adb_executable(), "devices"], capture_output=True, text=True, timeout=4, check=False)
     except (OSError, subprocess.TimeoutExpired):
         return {}
     states = {}
@@ -77,11 +110,11 @@ def adb_device_states():
 def capture_screen_png(serial: str) -> bytes:
     try:
         result = subprocess.run(
-            ["adb", "-s", serial, "exec-out", "screencap", "-p"],
+            [adb_executable(), "-s", serial, "exec-out", "screencap", "-p"],
             capture_output=True, timeout=6, check=False,
         )
-    except FileNotFoundError:
-        raise ValueError("ADB is not installed or not in PATH.") from None
+    except FileNotFoundError as exc:
+        raise ValueError(str(exc)) from None
     except subprocess.TimeoutExpired:
         raise ValueError("Screen capture timed out. Check the ADB connection.") from None
     if result.returncode or not result.stdout.startswith(PNG_SIGNATURE):
@@ -162,6 +195,10 @@ class BotController:
         if flags[2]:
             answers.append(str(boost_index))
         answers.append("y" if options.get("detect_relic") else "n")
+        for key, *_ in config.TOP_BOOSTS:
+            answers.append("y" if options.get(key, True) else "n")
+        answers.append("y" if options.get("auto_jump") else "n")
+        answers.append("y" if options.get("auto_add_friend") else "n")
 
         with self.lock:
             if self.process is not None and self.process.poll() is None:
@@ -173,10 +210,10 @@ class BotController:
             self.stopping = False
             self.started_at = time.time()
             self.finished_at = None
-            self.process = subprocess.Popen(
+            self.process = spawn_group(
                 [sys.executable, "-u", str(GUI_DIR / "runner.py"), self.ip, str(self.port)],
-                cwd=BOT_DIR, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT, text=True, bufsize=1, start_new_session=True,
+                cwd=PROJECT_DIR, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                encoding="utf-8", errors="replace", bufsize=1, env={**os.environ, "PYTHONIOENCODING": "utf-8"},
             )
             self._record(f"Starting bot on {self.serial}...")
             threading.Thread(target=self._read_output, args=(self.process,), daemon=True).start()
@@ -196,19 +233,13 @@ class BotController:
             self.stopping = True
             self._record("Stopping bot...")
             process = self.process
-        try:
-            os.killpg(process.pid, signal.SIGINT)
-        except ProcessLookupError:
-            return
+        interrupt_group(process)
 
         def force_stop():
             try:
                 process.wait(timeout=5)
             except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(process.pid, signal.SIGTERM)
-                except ProcessLookupError:
-                    pass
+                terminate_group(process)
 
         threading.Thread(target=force_stop, daemon=True).start()
 
@@ -282,10 +313,7 @@ class DeviceRegistry:
                 try:
                     process.wait(timeout=6)
                 except subprocess.TimeoutExpired:
-                    try:
-                        os.killpg(process.pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        pass
+                    kill_group(process)
                     try:
                         process.wait(timeout=2)
                     except subprocess.TimeoutExpired:
@@ -304,9 +332,9 @@ class DeviceRegistry:
     def connect(self, device_id: str):
         device = self.get(device_id)
         try:
-            result = subprocess.run(["adb", "connect", device.serial], capture_output=True, text=True, timeout=12, check=False)
-        except FileNotFoundError:
-            raise ValueError("ADB is not installed or not in PATH.") from None
+            result = subprocess.run([adb_executable(), "connect", device.serial], capture_output=True, text=True, timeout=12, check=False)
+        except FileNotFoundError as exc:
+            raise ValueError(str(exc)) from None
         except subprocess.TimeoutExpired:
             raise ValueError("ADB connection timed out.") from None
         with self.lock:
@@ -341,10 +369,7 @@ class DeviceRegistry:
             try:
                 process.wait(timeout=6)
             except subprocess.TimeoutExpired:
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
+                kill_group(process)
 
 
 registry = DeviceRegistry()
@@ -451,6 +476,9 @@ def main():
     parser.add_argument("--port", type=int, default=8766)
     parser.add_argument("--no-browser", action="store_true")
     args = parser.parse_args()
+    if sys.platform == "win32":
+        # Ctrl+Break would otherwise kill the server without stopping the bots it started.
+        signal.signal(signal.SIGBREAK, signal.default_int_handler)
     server = ThreadingHTTPServer(("127.0.0.1", args.port), Handler)
     url = f"http://127.0.0.1:{server.server_port}/"
     print(f"CookieRun GUI is ready at {url}", flush=True)

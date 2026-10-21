@@ -1,4 +1,6 @@
 __pycache__/
 *.py[cod]
 .venv/
+env/
+debug_screens/
 .DS_Store

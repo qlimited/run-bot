@@ -3,6 +3,12 @@ const fields = {
   fast_start: $('fastStart'), cookie_relay: $('cookieRelay'),
   random_boost: $('randomBoost'), boost_index: $('boostIndex'),
   detect_relic: $('detectRelic'),
+  hp_extension: $('hpExtension'), power_jelly_boost: $('powerJellyBoost'),
+  double_xp: $('doubleXp'), auto_jump: $('autoJump'), auto_add_friend: $('autoAddFriend'),
+};
+const toggleDefaults = {
+  fast_start: false, cookie_relay: false, random_boost: false, detect_relic: false,
+  hp_extension: true, power_jelly_boost: true, double_xp: true, auto_jump: false, auto_add_friend: false,
 };
 const selectedKey = 'cookierun-gui-selected-device-v2';
 const optionsKey = 'cookierun-gui-device-options-v2';
@@ -62,19 +68,16 @@ function setBoostVisibility() {
 function saveOptions() {
   if (!selectedId) return;
   optionsByDevice[selectedId] = {
-    fast_start: fields.fast_start.checked,
-    cookie_relay: fields.cookie_relay.checked,
-    random_boost: fields.random_boost.checked,
+    ...Object.fromEntries(Object.keys(toggleDefaults).map((key) => [key, fields[key].checked])),
     boost_index: Number(fields.boost_index.value),
-    detect_relic: fields.detect_relic.checked,
   };
   localStorage.setItem(optionsKey, JSON.stringify(optionsByDevice));
 }
 
 function loadOptions(deviceId) {
   const saved = optionsByDevice[deviceId] || {};
-  for (const key of ['fast_start', 'cookie_relay', 'random_boost', 'detect_relic']) {
-    fields[key].checked = Boolean(saved[key]);
+  for (const [key, fallback] of Object.entries(toggleDefaults)) {
+    fields[key].checked = saved[key] === undefined ? fallback : Boolean(saved[key]);
   }
   fields.boost_index.value = saved.boost_index || 1;
   setBoostVisibility();
