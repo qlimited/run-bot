@@ -6,6 +6,7 @@ Run with the project's venv Python:  env/bin/python tests/smoke_test.py  (Window
 import http.client
 import json
 import os
+import shutil
 import signal
 import socket
 import subprocess
@@ -20,6 +21,14 @@ FAKE_ADB = REPO / "tests" / ("fake_adb.bat" if WINDOWS else "fake_adb")
 SERIAL = "127.0.0.1:5555"
 OPTIONS = {"fast_start": False, "cookie_relay": False, "random_boost": False,
            "detect_relic": False, "auto_jump": False, "auto_add_friend": False}
+# One install layout per entry in adb.EMULATOR_ADB_GLOBS, in the same order.
+EMULATOR_LAYOUTS = (
+    "Netease/MuMuPlayer-12.0/shell/adb.exe",
+    "Netease/MuMu Player 12/nx_main/adb.exe",
+    "BlueStacks_nxt/HD-Adb.exe",
+    "LDPlayer/LDPlayer9/adb.exe",
+    "Nox/bin/nox_adb.exe",
+)
 
 TEMPLATE_CHECK = """
 import contextlib, io, os, sys
@@ -56,6 +65,31 @@ def base_env():
     env = {k: v for k, v in os.environ.items() if k not in ("PYTHONIOENCODING", "PYTHONUTF8")}
     env.update(ADB=str(FAKE_ADB), FAKE_ADB_PYTHON=sys.executable)
     return env
+
+
+def check_emulator_adb(workdir):
+    sys.path.insert(0, str(REPO))
+    import adb
+
+    root = Path(workdir) / "emulators"
+    for layout in EMULATOR_LAYOUTS:
+        (root / layout).parent.mkdir(parents=True, exist_ok=True)
+        (root / layout).touch()
+    found = list(adb._emulator_adb_candidates([root]))
+    assert found == [root / layout for layout in EMULATOR_LAYOUTS], f"emulator adb candidates: {found}"
+    ok("emulator adb globs match MuMu, BlueStacks, LDPlayer and Nox in order")
+
+    if not WINDOWS:
+        return
+    env = {k: v for k, v in os.environ.items() if k not in ("ADB", "ANDROID_HOME", "ANDROID_SDK_ROOT")}
+    env.update({"LOCALAPPDATA": str(Path(workdir) / "no-sdk"), "PROGRAMFILES": str(root), "PROGRAMFILES(X86)": str(root)})
+    env["PATH"] = os.pathsep.join(p for p in env["PATH"].split(os.pathsep) if not shutil.which("adb", path=p))
+    result = subprocess.run([sys.executable, str(REPO / "adb.py")], cwd=workdir, env=env,
+                            capture_output=True, text=True, timeout=60)
+    expected = f"adb: {root / EMULATOR_LAYOUTS[0]}"
+    assert result.returncode == 0 and result.stdout.strip() == expected, \
+        f"adb.py without an SDK printed {result.stdout!r} {result.stderr!r}, expected {expected!r}"
+    ok("adb.py falls back to an emulator's adb when there is no SDK or adb on PATH")
 
 
 def check_cli(workdir):
@@ -208,6 +242,7 @@ def main():
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     print(f"python {sys.version.split()[0]} on {sys.platform}", flush=True)
     with tempfile.TemporaryDirectory() as workdir:
+        check_emulator_adb(workdir)
         check_cli(workdir)
         check_gui(workdir)
     print("smoke test passed")

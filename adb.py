@@ -23,9 +23,31 @@ def _sdk_adb_candidates():
     return [Path(root).expanduser() / "platform-tools" / name for root in roots if root]
 
 
+# Windows emulators that ship their own adb, as globs under an install root, in the order they are tried.
+EMULATOR_ADB_GLOBS = (
+    "Netease/MuMu*/shell/adb.exe",    # MuMu Player 12
+    "Netease/MuMu*/nx_main/adb.exe",  # MuMu Player 12, version 4 and later
+    "BlueStacks*/HD-Adb.exe",         # BlueStacks 4 and 5
+    "LDPlayer/LDPlayer*/adb.exe",     # LDPlayer 4 and 9
+    "Nox/bin/nox_adb.exe",            # Nox
+)
+
+
+def _windows_install_roots():
+    roots = [os.environ.get("ProgramFiles"), os.environ.get("ProgramFiles(x86)"), os.environ.get("SystemDrive", "C:") + "\\"]
+    return list(dict.fromkeys(root for root in roots if root))
+
+
+def _emulator_adb_candidates(roots):
+    for pattern in EMULATOR_ADB_GLOBS:
+        for root in roots:
+            # Newest version first when several are installed, e.g. LDPlayer9 before LDPlayer4.0.
+            yield from sorted(Path(root).glob(pattern), reverse=True)
+
+
 @functools.cache
 def adb_executable() -> str:
-    """Path to adb: $ADB, then PATH, then the Android SDK's default install location."""
+    """Path to adb: $ADB, then PATH, then the Android SDK's default install location, then on Windows an emulator's own adb."""
     override = os.environ.get("ADB")
     if override:
         found = shutil.which(override.strip('"'))
@@ -38,6 +60,10 @@ def adb_executable() -> str:
     for candidate in _sdk_adb_candidates():
         if candidate.is_file():
             return str(candidate)
+    if sys.platform == "win32":
+        for candidate in _emulator_adb_candidates(_windows_install_roots()):
+            if candidate.is_file():
+                return str(candidate)
     raise FileNotFoundError(
         "adb was not found. Install Android platform-tools (https://developer.android.com/tools/releases/platform-tools) "
         "and add it to PATH, or set the ADB environment variable to the adb executable."

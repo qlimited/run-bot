@@ -35,7 +35,7 @@ The setup script creates `env/` in the repository folder and installs the depend
 ### Windows 10 and 11
 
 1. Install Python 3.12 or newer from [python.org](https://www.python.org/downloads/).
-2. Download [Android platform-tools](https://developer.android.com/tools/releases/platform-tools) and unzip it. Add the `platform-tools` folder to `PATH`, or unzip it to `%LOCALAPPDATA%\Android\Sdk\platform-tools`, where the bot finds it without `PATH`.
+2. Download [Android platform-tools](https://developer.android.com/tools/releases/platform-tools) and unzip it. Add the `platform-tools` folder to `PATH`, or unzip it to `%LOCALAPPDATA%\Android\Sdk\platform-tools`, where the bot finds it without `PATH`. Without platform-tools, the bot uses the adb that MuMu Player 12, BlueStacks, LDPlayer, or Nox installs.
 3. Start the emulator at 1280×720 and enable ADB in its settings.
 4. In the repository folder, run `setup.bat`.
 5. Run `start-gui.bat` for the dashboard at `http://127.0.0.1:8766/`, or `start-bot.bat` for the command-line bot.
@@ -68,6 +68,7 @@ The bot and the dashboard look for `adb` in this order:
 2. `adb` on `PATH`.
 3. `platform-tools` under `ANDROID_HOME` or `ANDROID_SDK_ROOT`.
 4. The Android SDK default folder: `~/Library/Android/sdk` on macOS, `%LOCALAPPDATA%\Android\Sdk` on Windows, and `~/Android/Sdk` on Linux.
+5. On Windows only, the adb that ships with an emulator in its default install folder under `Program Files`, `Program Files (x86)`, or the system drive, in this order: MuMu Player 12 (`Netease\MuMu*\shell\adb.exe` or `Netease\MuMu*\nx_main\adb.exe`), BlueStacks (`BlueStacks*\HD-Adb.exe`), LDPlayer (`LDPlayer\LDPlayer*\adb.exe`), and Nox (`Nox\bin\nox_adb.exe`). If you installed the emulator in another folder, set `ADB` instead.
 
 To use a specific adb on macOS or Linux, run `ADB=/opt/platform-tools/adb ./start-gui.sh`. On Windows, run `set ADB=C:\platform-tools\adb.exe` and then `start-gui.bat` in the same window.
 
