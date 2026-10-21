@@ -39,6 +39,7 @@ from config import (
     FAST_START_USE_BUTTON,
     FRIEND_BOTTOM_LEADERBOARD_REGION,
     FRIEND_BOTTOM_LEADERBOARD_TEMPLATE,
+    FRIEND_INFO_CLOSE_BUTTON,
     FRIEND_ACCEPT_REGION,
     FRIEND_ACCEPT_TEMPLATE,
     FRIEND_ADD_PER_VISIT,
@@ -100,7 +101,7 @@ from config import (
     TOP_BOOSTS,
 )
 from detection import (
-    detect_anti_bot_odd_cards, detect_stage, detect_templates, find_all_templates, is_friend_list_full, is_top_boost_on,
+    detect_anti_bot_odd_cards, detect_stage, detect_templates, find_all_templates, is_friend_info_open, is_friend_list_full, is_top_boost_on,
     region_changed,
 )
 from config import (
@@ -440,7 +441,18 @@ def _capture():
 
 
 def _on_main_menu(screen):
-    return detect_stage(screen, ["MAINMENU"]) == "MAINMENU"
+    return not is_friend_info_open(screen) and detect_stage(screen, ["MAINMENU"]) == "MAINMENU"
+
+
+def close_friend_info():
+    """Dismiss Friend's Info and verify that the unobstructed main menu returns."""
+    for _ in range(2):
+        if not is_friend_info_open(_capture()):
+            return _on_main_menu(_capture())
+        safe_device_tap(DEVICE_IP, DEVICE_PORT, *FRIEND_INFO_CLOSE_BUTTON)
+        if _wait_for(_on_main_menu):
+            return True
+    return False
 
 
 def _wait_for(predicate, timeout=_DIALOG_TIMEOUT):
@@ -606,6 +618,8 @@ class FriendAdder:
         return _leave_friends_dialog()
 
     def _blocked(self, screen):
+        if is_friend_info_open(screen):
+            return "friend info open"
         if not _friends_dialog_open(screen):
             return "friends dialog closed"
         if is_friend_list_full(screen):

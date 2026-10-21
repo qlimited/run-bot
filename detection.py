@@ -14,6 +14,8 @@ from config import (
     ANTI_BOT_CARD_POS_5,
     ANTI_BOT_CARD_POS_6,
     BOOST_TEMPLATES,
+    FRIEND_INFO_REGION,
+    FRIEND_INFO_TEMPLATE,
     FRIEND_COUNT_REGION,
     FRIEND_COUNT_SLASH_TEMPLATE,
     MATCH_THRESHOLD,
@@ -58,6 +60,8 @@ def load_templates():
         for filename in template_files:
             _get_template_gray(filename)
     for filename in RUN_BOX_TEMPLATE:
+        _get_template_gray(filename)
+    for filename in FRIEND_INFO_TEMPLATE:
         _get_template_gray(filename)
 
 
@@ -109,6 +113,11 @@ def detect_templates(screen, template_files, region=None, threshold=MATCH_THRESH
             y = max_loc[1] + offset_y
             matches.append((x, y, tw, th))
     return matches
+
+
+def is_friend_info_open(screen):
+    """Recognize the Friend's Info title before the main menu behind it."""
+    return bool(detect_templates(screen, FRIEND_INFO_TEMPLATE, FRIEND_INFO_REGION, threshold=0.9))
 
 
 def find_all_templates(screen, template_files, region=None, threshold=MATCH_THRESHOLD):

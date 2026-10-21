@@ -17,6 +17,7 @@ from actions import (
     accept_relic_claim,
     accept_too_many_treasures,
     close_announcement_dialog,
+    close_friend_info,
     complete_finish,
     FriendAdder,
     FriendLifeSender,
@@ -54,7 +55,7 @@ from config import (
     SESSION_RESET_INTERVAL,
     TOP_BOOSTS,
 )
-from detection import detect_stage, find_run_box, load_templates
+from detection import detect_stage, find_run_box, is_friend_info_open, load_templates
 from debug import save_debug_screen
 
 # -------------------
@@ -176,6 +177,12 @@ def main():
             device_screen = device_capture_screen(DEVICE_IP, DEVICE_PORT)
             if jumper:
                 jumper.observe_box(find_run_box(device_screen), seen_at)
+            if is_friend_info_open(device_screen):
+                print("ℹ️ Friend's Info is open; closing it...")
+                if not close_friend_info():
+                    raise RuntimeError("Friend's Info did not close or the main menu did not return")
+                last_stage = None
+                continue
             stage = detect_stage(device_screen, get_detection_stage_names(detection_group, exclude=relic_exclude))
             if stage is None:
                 if time.time() - last_detected_time >= DETECTION_RECOVERY_SCAN_INTERVAL[detection_group]:
