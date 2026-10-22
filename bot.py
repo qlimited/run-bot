@@ -121,7 +121,7 @@ def prompt_user_options():
         key: input(f"🧪 Enable {name}? [y/n]: ").strip().lower() == "y"
         for key, name, _, _ in TOP_BOOSTS
     }
-    auto_jump = input("🦘 Auto Jump (random left-side taps + jump for boxes)? [y/n]: ").strip().lower() == "y"
+    auto_jump = input("🦘 Auto Jump (random single/double jumps + jump for boxes)? [y/n]: ").strip().lower() == "y"
     auto_add_friend = input("🤝 Auto Add Friend (accept + send 1–3 requests per visit)? [y/n]: ").strip().lower() == "y"
     print("---------------------")
 

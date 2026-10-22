@@ -10,7 +10,7 @@ An automated bot for CookieRun Classic that uses ADB (Android Debug Bridge) and 
 - Optional **Cookie Relay** power-up (auto-purchase and use)
 - Optional **Desired Random Boost** (auto-purchase the selected boost from 11 available options)
 - Per-boost on/off for the top purchase-screen boosts: **HP Extension**, **Power Jelly Boost**, **Double XP**
-- Optional **Auto Jump** (random taps anywhere on the left side during a run, never near the last few spots and with no fixed rhythm, plus a timed jump to collect each flying item box)
+- Optional **Auto Jump** (random single or double jumps on the left side throughout a run, plus a timed jump to collect each flying item box)
 - Optional **Auto Add Friend** (after each game, accepts incoming friend requests and sends new ones from the Find tab, 1–3 per visit; rejects requests from players whose own list is full, and pauses 30 minutes once your list is full)
 - Sends lives to up to 5 random unsent friends from the main-menu friend list before each game, scrolling to find more and resting 30 minutes once everyone has one
 - Human-like tap behavior with randomized coordinate jitter and delays
@@ -116,7 +116,7 @@ On startup, the bot will:
    - **Cookie Relay**: auto-buy and use the Cookie Relay item each round
    - **Desired Random Boost**: auto-buy a specific boost each round (choose from 11 options)
    - **HP Extension / Power Jelly Boost / Double XP**: turn each top boost on or off on the purchase screen
-   - **Auto Jump**: randomly tap the left side to jump during a run, and time a jump to collect each item box
+   - **Auto Jump**: randomly make one or two jumps throughout a run, and time a jump to collect each item box
    - **Auto Add Friend**: accept friend requests and send new ones, 1–3 per main-menu visit, stopping while your friend list is full
 3. Begin the automation loop
 

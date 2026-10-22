@@ -71,6 +71,8 @@ from config import (
     JUMP_INTERVAL_BOUNDS,
     JUMP_INTERVAL_MEDIAN,
     JUMP_INTERVAL_SIGMA,
+    JUMP_DOUBLE_CHANCE,
+    JUMP_DOUBLE_DELAY_BOUNDS,
     JUMP_MEMORY,
     JUMP_MIN_SEPARATION,
     JUMP_RISE_SECONDS,
@@ -161,7 +163,7 @@ def _random_jump_point(recent):
 
 
 class JumpController:
-    """The only source of jump taps during a run: random left-side jumps, plus one timed jump per reachable box."""
+    """Random single/double jumps during a run, plus one timed jump per reachable box."""
 
     def __init__(self):
         self._cond = threading.Condition()
@@ -227,11 +229,13 @@ class JumpController:
                 if self._plan and now >= self._plan[0]:
                     self._plan[1].handled = True
                     self._plan = None
-                    return self._take_point(), True
+                    return self._take_point(), True, 0.0
                 if now >= self._next_random:
-                    self._next_random = now + _jump_interval()
                     if now >= self._hold_until:
-                        return self._take_point(), False
+                        double_gap = random.uniform(*JUMP_DOUBLE_DELAY_BOUNDS) if random.random() < JUMP_DOUBLE_CHANCE else 0.0
+                        self._next_random = now + double_gap + _jump_interval()
+                        return self._take_point(), False, double_gap
+                    self._next_random = now + _jump_interval()
                     continue
                 due = self._next_random if self._plan is None else min(self._next_random, self._plan[0])
                 self._cond.wait(due - now)
@@ -239,10 +243,25 @@ class JumpController:
 
     def _run(self):
         while tap := self._next_tap():
-            point, for_box = tap
+            point, for_box, double_gap = tap
             if for_box:
                 print("📦 Jump for box")
             device_tap(DEVICE_IP, DEVICE_PORT, *point)
+            if not double_gap:
+                continue
+            deadline = time.monotonic() + double_gap
+            with self._cond:
+                while not self._stopping:
+                    if self._plan and self._plan[0] <= deadline:
+                        break
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0:
+                        break
+                    self._cond.wait(remaining)
+                if self._stopping or (self._plan and self._plan[0] <= deadline):
+                    continue
+                second_point = self._take_point()
+            device_tap(DEVICE_IP, DEVICE_PORT, *second_point)
 
 
 def purchase_fast_start():

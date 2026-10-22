@@ -318,7 +318,9 @@ JUMP_MEMORY = 5
 # Lognormal gaps cluster near the median with an occasional long pause, so there is no fixed rhythm.
 JUMP_INTERVAL_MEDIAN = 1.1
 JUMP_INTERVAL_SIGMA = 0.5
-JUMP_INTERVAL_BOUNDS = (0.6, 4.0)       # seconds; floor is above the 0.58 s airtime so a gap never becomes a double jump
+JUMP_INTERVAL_BOUNDS = (0.6, 4.0)       # seconds between finished jump sequences
+JUMP_DOUBLE_CHANCE = 0.5               # otherwise make a single jump
+JUMP_DOUBLE_DELAY_BOUNDS = (0.2, 0.28) # seconds between the first and second taps
 COOKIE_X = 305                          # the cookie never moves horizontally
 JUMP_RISE_SECONDS = 0.27                # takeoff to apex
 TAP_LATENCY_SECONDS = 0.05              # adb input tap
