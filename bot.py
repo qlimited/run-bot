@@ -19,6 +19,7 @@ from actions import (
     close_announcement_dialog,
     close_friend_info,
     complete_finish,
+    draw_gifts,
     FriendAdder,
     FriendLifeSender,
     handle_anti_bot,
@@ -123,6 +124,7 @@ def prompt_user_options():
     }
     auto_jump = input("🦘 Auto Jump (random single/double jumps + jump for boxes)? [y/n]: ").strip().lower() == "y"
     auto_add_friend = input("🤝 Auto Add Friend (accept + send 1–3 requests per visit)? [y/n]: ").strip().lower() == "y"
+    auto_gift_draw = input("🎁 Auto Gift Draw (alternate with sending lives after each game)? [y/n]: ").strip().lower() == "y"
     print("---------------------")
 
     return {
@@ -135,7 +137,23 @@ def prompt_user_options():
         "top_boosts": top_boosts,
         "auto_jump": auto_jump,
         "auto_add_friend": auto_add_friend,
+        "auto_gift_draw": auto_gift_draw,
     }
+
+
+def run_post_game_activity(next_task, friend_lives, lives_due):
+    """Run one post-game gift or heart visit and return (next task, used mailbox)."""
+    if next_task == "gifts":
+        print("🎁 Post-game task: Gift Draw (up to 5 boxes)")
+        draw_gifts(max_gifts=5)
+        return "hearts", False
+    print("💌 Post-game task: sending lives")
+    if lives_due:
+        handle_quick_receive_and_send_lives()
+        return "gifts", True
+    if not friend_lives.run():
+        print("⚠️ Main menu changed while sending lives; checking again")
+    return "gifts", False
 
 
 # -------------------
@@ -168,6 +186,9 @@ def main():
         lives_interval = random.uniform(25 * 60, 35 * 60)
         friend_lives = FriendLifeSender()
         friend_adder = FriendAdder()
+        next_post_game_task = "gifts"
+        post_game_pending = False
+        post_game_task_done = False
 
         while True:
             if jumper and detection_group != "IN_GAME":
@@ -216,22 +237,35 @@ def main():
                     detection_group = "PRE_GAME"
                     last_stage = None
                     is_first_game = True
-                    continue
-                lives_elapsed = time.time() - last_lives_time
-                if lives_elapsed >= lives_interval:
-                    print(f"💌 ~30 min passed ({lives_elapsed / 60:.1f} min) — receiving and sending lives...")
-                    handle_quick_receive_and_send_lives()
-                    last_lives_time = time.time()
-                    lives_interval = random.uniform(25 * 60, 35 * 60)
-                    last_stage = None
+                    post_game_pending = False
+                    post_game_task_done = False
                     continue
                 if detection_group == "POST_GAME":
                     detection_group = "PRE_GAME"
+                if post_game_pending:
+                    post_game_pending = False
+                    if options["auto_gift_draw"]:
+                        next_post_game_task, used_mailbox = run_post_game_activity(
+                            next_post_game_task, friend_lives, time.time() - last_lives_time >= lives_interval
+                        )
+                        if used_mailbox:
+                            last_lives_time = time.time()
+                            lives_interval = random.uniform(25 * 60, 35 * 60)
+                        post_game_task_done = True
                     last_stage = None
                     continue
-                if not friend_lives.run():
-                    last_stage = None
-                    continue
+                if not post_game_task_done:
+                    lives_elapsed = time.time() - last_lives_time
+                    if lives_elapsed >= lives_interval:
+                        print(f"💌 ~30 min passed ({lives_elapsed / 60:.1f} min) — receiving and sending lives...")
+                        handle_quick_receive_and_send_lives()
+                        last_lives_time = time.time()
+                        lives_interval = random.uniform(25 * 60, 35 * 60)
+                        last_stage = None
+                        continue
+                    if not friend_lives.run():
+                        last_stage = None
+                        continue
                 if options["auto_add_friend"] and not friend_adder.run():
                     last_stage = None
                     continue
@@ -241,6 +275,8 @@ def main():
                     time.sleep(delay)
                 is_first_game = False
                 start_game()
+                post_game_pending = False
+                post_game_task_done = False
                 detection_group = "PRE_GAME"
             elif stage == "PURCHASE_ITEM":
                 print("🛒 Detected Stage: PURCHASE_ITEM")
@@ -277,16 +313,19 @@ def main():
             elif stage == "GAME_COMPLETE":
                 print("✅ Detected Stage: GAME_COMPLETE")
                 complete_finish()
+                post_game_pending = True
                 detection_group = "POST_GAME"
             elif stage == "MYSTERY_BOX":
                 print("🎁 Detected Stage: MYSTERY_BOX")
                 accept_mystery_box()
                 time.sleep(3)
+                post_game_pending = post_game_pending or not is_first_game
                 detection_group = "POST_GAME"
                 last_stage = None
             elif stage == "CONGRATULATIONS":
                 print("🎉 Detected Stage: CONGRATULATIONS")
                 accept_congratulations()
+                post_game_pending = post_game_pending or not is_first_game
                 detection_group = "POST_GAME"
                 last_stage = None
             elif stage == "LEVEL_UP":
@@ -324,6 +363,7 @@ def main():
             elif stage == "OVERTAKE_BREAK_SCORE":
                 print("🏆 Detected Stage: OVERTAKE_BREAK_SCORE")
                 accept_overtake_break_score()
+                post_game_pending = post_game_pending or not is_first_game
                 detection_group = "POST_GAME"
                 last_stage = None
             elif stage == "TOO_MANY_TREASURES":
@@ -355,6 +395,8 @@ def main():
                 detection_group = "PRE_GAME"
                 last_stage = None
                 is_first_game = True
+                post_game_pending = False
+                post_game_task_done = False
             elif stage == "INACTIVE":
                 print("💤 Detected Stage: INACTIVE")
                 handle_inactive()

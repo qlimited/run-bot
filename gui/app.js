@@ -5,10 +5,12 @@ const fields = {
   detect_relic: $('detectRelic'),
   hp_extension: $('hpExtension'), power_jelly_boost: $('powerJellyBoost'),
   double_xp: $('doubleXp'), auto_jump: $('autoJump'), auto_add_friend: $('autoAddFriend'),
+  auto_gift_draw: $('autoGiftDraw'),
 };
 const toggleDefaults = {
   fast_start: false, cookie_relay: false, random_boost: false, detect_relic: false,
   hp_extension: true, power_jelly_boost: true, double_xp: true, auto_jump: false, auto_add_friend: false,
+  auto_gift_draw: false,
 };
 const selectedKey = 'cookierun-gui-selected-device-v2';
 const optionsKey = 'cookierun-gui-device-options-v2';
@@ -617,6 +619,23 @@ function selectDevice(deviceId) {
   syncScreen(currentDevices.find((device) => device.id === deviceId));
   poll();
 }
+
+function setSettingsOpen(open, scroll = false) {
+  const panel = $('setup');
+  const button = $('settingsButton');
+  panel.hidden = !open;
+  button.setAttribute('aria-expanded', String(open));
+  button.setAttribute('aria-label', `${open ? 'ปิด' : 'เปิด'}ตั้งค่าการเล่น`);
+  button.classList.toggle('active', open);
+  if (open && scroll) requestAnimationFrame(() => panel.scrollIntoView({ block: 'start' }));
+}
+
+$('settingsButton').addEventListener('click', () => setSettingsOpen($('setup').hidden));
+document.querySelector('a[href="#setup"]').addEventListener('click', () => setSettingsOpen(true));
+window.addEventListener('hashchange', () => {
+  if (location.hash === '#setup') setSettingsOpen(true, true);
+});
+if (location.hash === '#setup') setSettingsOpen(true, true);
 
 $('screenToggle').addEventListener('click', () => {
   if (screenActive) {

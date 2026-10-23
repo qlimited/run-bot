@@ -20,7 +20,8 @@ WINDOWS = sys.platform == "win32"
 FAKE_ADB = REPO / "tests" / ("fake_adb.bat" if WINDOWS else "fake_adb")
 SERIAL = "127.0.0.1:5555"
 OPTIONS = {"fast_start": False, "cookie_relay": False, "random_boost": False,
-           "detect_relic": False, "auto_jump": False, "auto_add_friend": False}
+           "detect_relic": False, "auto_jump": False, "auto_add_friend": False,
+           "auto_gift_draw": False}
 # One install layout per entry in adb.EMULATOR_ADB_GLOBS, in the same order.
 EMULATOR_LAYOUTS = (
     "Netease/MuMuPlayer-12.0/shell/adb.exe",

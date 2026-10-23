@@ -199,6 +199,7 @@ class BotController:
             answers.append("y" if options.get(key, True) else "n")
         answers.append("y" if options.get("auto_jump") else "n")
         answers.append("y" if options.get("auto_add_friend") else "n")
+        answers.append("y" if options.get("auto_gift_draw") else "n")
 
         with self.lock:
             if self.process is not None and self.process.poll() is None:

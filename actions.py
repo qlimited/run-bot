@@ -54,6 +54,19 @@ from config import (
     FRIEND_REJECT_REGION,
     FRIEND_REJECT_TEMPLATE,
     FRIEND_REQUEST_ROW_X,
+    GIFT_BOX_CENTERS,
+    GIFT_CLOSE_BUTTON,
+    GIFT_CONFIRM_BUTTON,
+    GIFT_DRAW_BUTTON,
+    GIFT_DRAW_READY_REGION,
+    GIFT_DRAW_READY_TEMPLATE,
+    GIFT_DRAW_TITLE_REGION,
+    GIFT_DRAW_TITLE_TEMPLATE,
+    GIFT_OPEN_BUTTON,
+    GIFT_PICK_TITLE_REGION,
+    GIFT_PICK_TITLE_TEMPLATE,
+    GIFT_RESULT_TITLE_REGION,
+    GIFT_RESULT_TITLE_TEMPLATE,
     FRIEND_REQUEST_SENT_TOAST_REGION,
     FRIEND_REQUEST_SENT_TOAST_TEMPLATE,
     FRIENDS_BUTTON,
@@ -481,6 +494,53 @@ def _wait_for(predicate, timeout=_DIALOG_TIMEOUT):
             return False
         time.sleep(0.3)
     return True
+
+
+def draw_gifts(max_gifts=500):
+    """Open available Gift Draw boxes, checking each dialog before every tap."""
+    if not _on_main_menu(_capture()):
+        raise RuntimeError("Gift Draw needs the main menu")
+    safe_device_tap(DEVICE_IP, DEVICE_PORT, *GIFT_OPEN_BUTTON)
+    if not _wait_for(lambda s: detect_templates(s, GIFT_DRAW_TITLE_TEMPLATE, GIFT_DRAW_TITLE_REGION), 6):
+        raise RuntimeError("Gift Draw did not open")
+    time.sleep(0.8)  # The title appears before the dialog finishes animating.
+
+    opened = 0
+    for _ in range(max_gifts):
+        screen = _capture()
+        if not detect_templates(screen, GIFT_DRAW_TITLE_TEMPLATE, GIFT_DRAW_TITLE_REGION, threshold=0.9):
+            raise RuntimeError("Gift Draw page changed unexpectedly")
+        if not detect_templates(screen, GIFT_DRAW_READY_TEMPLATE, GIFT_DRAW_READY_REGION, threshold=0.9):
+            break
+        safe_device_tap(DEVICE_IP, DEVICE_PORT, *GIFT_DRAW_BUTTON)
+        if not _wait_for(lambda s: detect_templates(s, GIFT_PICK_TITLE_TEMPLATE, GIFT_PICK_TITLE_REGION, threshold=0.9), 6):
+            raise RuntimeError("Gift box selection did not appear")
+        time.sleep(0.8)  # Wait until the gift boxes will accept a tap.
+        box = random.choice(GIFT_BOX_CENTERS)
+        safe_device_tap(DEVICE_IP, DEVICE_PORT, *box)
+        result_visible = lambda s: bool(detect_templates(s, GIFT_RESULT_TITLE_TEMPLATE, GIFT_RESULT_TITLE_REGION, threshold=0.9))
+        if not _wait_for(result_visible, 3):
+            if not detect_templates(_capture(), GIFT_PICK_TITLE_TEMPLATE, GIFT_PICK_TITLE_REGION, threshold=0.9):
+                raise RuntimeError("Gift selection changed unexpectedly")
+            safe_device_tap(DEVICE_IP, DEVICE_PORT, *box)
+            if not _wait_for(result_visible, 6):
+                raise RuntimeError("Gift reward did not appear")
+        time.sleep(0.6)
+        safe_device_tap(DEVICE_IP, DEVICE_PORT, *GIFT_CONFIRM_BUTTON)
+        if not _wait_for(lambda s: detect_templates(s, GIFT_DRAW_TITLE_TEMPLATE, GIFT_DRAW_TITLE_REGION, threshold=0.9)
+                         and not detect_templates(s, GIFT_PICK_TITLE_TEMPLATE, GIFT_PICK_TITLE_REGION, threshold=0.9), 6):
+            raise RuntimeError("Gift Draw did not return after confirming reward")
+        opened += 1
+        print(f"🎁 Gift Draw: opened {opened}")
+        time.sleep(0.6)
+
+    if opened == max_gifts:
+        print(f"🎁 Gift Draw: paused after {max_gifts} boxes; more can open on the next visit")
+    safe_device_tap(DEVICE_IP, DEVICE_PORT, *GIFT_CLOSE_BUTTON)
+    if not _wait_for(_on_main_menu, 6):
+        raise RuntimeError("Gift Draw did not close to the main menu")
+    print(f"🎁 Gift Draw: finished with {opened} boxes")
+    return opened
 
 
 def _swipe_friend_list(toward_top, travel, duration):
