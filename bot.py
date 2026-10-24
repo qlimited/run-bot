@@ -124,6 +124,7 @@ def prompt_user_options():
     }
     auto_jump = input("🦘 Auto Jump (random single/double jumps + jump for boxes)? [y/n]: ").strip().lower() == "y"
     auto_add_friend = input("🤝 Auto Add Friend (accept + send 1–3 requests per visit)? [y/n]: ").strip().lower() == "y"
+    send_friend_lives = input("💌 Send lives to friends (friend list + mailbox)? [Y/n]: ").strip().lower() != "n"
     auto_gift_draw = input("🎁 Auto Gift Draw (alternate with sending lives after each game)? [y/n]: ").strip().lower() == "y"
     print("---------------------")
 
@@ -137,16 +138,17 @@ def prompt_user_options():
         "top_boosts": top_boosts,
         "auto_jump": auto_jump,
         "auto_add_friend": auto_add_friend,
+        "send_friend_lives": send_friend_lives,
         "auto_gift_draw": auto_gift_draw,
     }
 
 
-def run_post_game_activity(next_task, friend_lives, lives_due):
+def run_post_game_activity(next_task, friend_lives, lives_due, send_friend_lives=True):
     """Run one post-game gift or heart visit and return (next task, used mailbox)."""
-    if next_task == "gifts":
+    if next_task == "gifts" or not send_friend_lives:
         print("🎁 Post-game task: Gift Draw (up to 5 boxes)")
         draw_gifts(max_gifts=5)
-        return "hearts", False
+        return ("hearts" if send_friend_lives else "gifts"), False
     print("💌 Post-game task: sending lives")
     if lives_due:
         handle_quick_receive_and_send_lives()
@@ -246,7 +248,8 @@ def main():
                     post_game_pending = False
                     if options["auto_gift_draw"]:
                         next_post_game_task, used_mailbox = run_post_game_activity(
-                            next_post_game_task, friend_lives, time.time() - last_lives_time >= lives_interval
+                            next_post_game_task, friend_lives, time.time() - last_lives_time >= lives_interval,
+                            options["send_friend_lives"],
                         )
                         if used_mailbox:
                             last_lives_time = time.time()
@@ -254,7 +257,7 @@ def main():
                         post_game_task_done = True
                     last_stage = None
                     continue
-                if not post_game_task_done:
+                if not post_game_task_done and options["send_friend_lives"]:
                     lives_elapsed = time.time() - last_lives_time
                     if lives_elapsed >= lives_interval:
                         print(f"💌 ~30 min passed ({lives_elapsed / 60:.1f} min) — receiving and sending lives...")
@@ -312,6 +315,9 @@ def main():
                 detection_group = "IN_GAME"
             elif stage == "GAME_COMPLETE":
                 print("✅ Detected Stage: GAME_COMPLETE")
+                if jumper:
+                    jumper.stop()
+                    jumper = None
                 complete_finish()
                 post_game_pending = True
                 detection_group = "POST_GAME"

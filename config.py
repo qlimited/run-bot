@@ -324,8 +324,8 @@ TOP_BOOST_ON_MAX_HUE = 35
 # -------------------
 # AUTO JUMP
 # -------------------
-# Any tap on the left side jumps. Region is below the HP bar, above the boost bar, away from screen centre.
-JUMP_TAP_REGION = (40, 140, 600, 620)   # x1, y1, x2, y2
+# Keep every randomized tap inside the visible Jump button (1280x720 game screen).
+JUMP_TAP_REGION = (105, 580, 230, 665)  # x1, y1, x2, y2
 JUMP_MIN_SEPARATION = 70                # px from each of the last JUMP_MEMORY taps
 JUMP_MEMORY = 5
 # Lognormal gaps cluster near the median with an occasional long pause, so there is no fixed rhythm.
@@ -343,7 +343,6 @@ RUN_BOX_TEMPLATE = ["RUN_BOX_1.png", "RUN_BOX_2.png"]  # white and brown winged 
 RUN_BOX_THRESHOLD = 0.7                 # boxes score >= 0.95 on their own template, empty frames <= 0.50
 RUN_BOX_SEARCH_REGION = (320, 100, 1280, 640)
 RUN_BOX_DEFAULT_SPEED = 400             # px/s leftward (measured on two boxes), until two sightings give a live speed
-RUN_BOX_PASS_MARGIN = 0.6               # seconds random jumps stay held after the box reaches the cookie
 
 # -------------------
 # FRIEND LIVES (main-menu friend list)

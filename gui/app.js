@@ -5,11 +5,13 @@ const fields = {
   detect_relic: $('detectRelic'),
   hp_extension: $('hpExtension'), power_jelly_boost: $('powerJellyBoost'),
   double_xp: $('doubleXp'), auto_jump: $('autoJump'), auto_add_friend: $('autoAddFriend'),
+  send_friend_lives: $('sendFriendLives'),
   auto_gift_draw: $('autoGiftDraw'),
 };
 const toggleDefaults = {
   fast_start: false, cookie_relay: false, random_boost: false, detect_relic: false,
   hp_extension: true, power_jelly_boost: true, double_xp: true, auto_jump: false, auto_add_friend: false,
+  send_friend_lives: true,
   auto_gift_draw: false,
 };
 const selectedKey = 'cookierun-gui-selected-device-v2';

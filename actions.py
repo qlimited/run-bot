@@ -109,7 +109,6 @@ from config import (
     RELIC_CLOSE_BUTTON,
     RELIC_COMPLETE_BUTTON,
     RUN_BOX_DEFAULT_SPEED,
-    RUN_BOX_PASS_MARGIN,
     START_BUTTON,
     CONNECTION_LOST_RELOAD_BUTTON,
     TAP_LATENCY_SECONDS,
@@ -184,19 +183,23 @@ class JumpController:
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._recent = deque(maxlen=JUMP_MEMORY)
         self._next_random = 0.0
-        self._hold_until = 0.0
         self._box = None
         self._plan = None  # (fire_at, box)
+        self._single_jumps = 0
+        self._double_jumps = 0
+        self._box_jumps = 0
 
     def start(self):
         self._next_random = time.monotonic() + _jump_interval()
         self._thread.start()
+        print("🦘 Auto Jump started: random single and double jumps throughout the run")
 
     def stop(self):
         with self._cond:
             self._stopping = True
             self._cond.notify()
         self._thread.join()
+        print(f"🦘 Auto Jump finished: {self._single_jumps} single, {self._double_jumps} double, {self._box_jumps} box jumps")
 
     def observe_box(self, center, seen_at):
         """Feed one screenshot's box sighting (None when absent); seen_at is when the capture was requested."""
@@ -215,7 +218,6 @@ class JumpController:
                     speed = dx / dt
                 box.x, box.seen_at = cx, seen_at
             arrival = seen_at + (cx - COOKIE_X) / speed
-            self._hold_until = max(self._hold_until, arrival + RUN_BOX_PASS_MARGIN)
 
             # Boxes bob between y≈195 and 413, always above a standing cookie, so every box needs a jump.
             # Peaking at arrival sweeps the cookie through that whole band while the box overlaps it.
@@ -227,7 +229,7 @@ class JumpController:
                     box.handled = True
             self._cond.notify()
         if is_new:
-            print(f"📦 Box spotted at ({cx}, {cy}), holding random jumps")
+            print(f"📦 Box spotted at ({cx}, {cy}), scheduling pickup jump")
 
     def _take_point(self):
         point = _random_jump_point(self._recent)
@@ -242,14 +244,17 @@ class JumpController:
                 if self._plan and now >= self._plan[0]:
                     self._plan[1].handled = True
                     self._plan = None
+                    self._next_random = max(self._next_random, now + _jump_interval())
                     return self._take_point(), True, 0.0
                 if now >= self._next_random:
-                    if now >= self._hold_until:
-                        double_gap = random.uniform(*JUMP_DOUBLE_DELAY_BOUNDS) if random.random() < JUMP_DOUBLE_CHANCE else 0.0
-                        self._next_random = now + double_gap + _jump_interval()
-                        return self._take_point(), False, double_gap
-                    self._next_random = now + _jump_interval()
-                    continue
+                    # Keep random jumps running while a box approaches. Only yield when its
+                    # timed jump is imminent, so a random jump cannot spoil that pickup.
+                    if self._plan and self._plan[0] - now <= JUMP_RISE_SECONDS + max(JUMP_DOUBLE_DELAY_BOUNDS):
+                        self._cond.wait(max(self._plan[0] - now, 0.001))
+                        continue
+                    double_gap = random.uniform(*JUMP_DOUBLE_DELAY_BOUNDS) if random.random() < JUMP_DOUBLE_CHANCE else 0.0
+                    self._next_random = now + double_gap + _jump_interval()
+                    return self._take_point(), False, double_gap
                 due = self._next_random if self._plan is None else min(self._next_random, self._plan[0])
                 self._cond.wait(due - now)
             return None
@@ -260,7 +265,11 @@ class JumpController:
             if for_box:
                 print("📦 Jump for box")
             device_tap(DEVICE_IP, DEVICE_PORT, *point)
+            if for_box:
+                self._box_jumps += 1
             if not double_gap:
+                if not for_box:
+                    self._single_jumps += 1
                 continue
             deadline = time.monotonic() + double_gap
             with self._cond:
@@ -272,9 +281,13 @@ class JumpController:
                         break
                     self._cond.wait(remaining)
                 if self._stopping or (self._plan and self._plan[0] <= deadline):
+                    self._single_jumps += 1
                     continue
                 second_point = self._take_point()
             device_tap(DEVICE_IP, DEVICE_PORT, *second_point)
+            self._double_jumps += 1
+            if (self._single_jumps + self._double_jumps) % 20 == 0:
+                print(f"🦘 Auto Jump: {self._single_jumps} single, {self._double_jumps} double so far")
 
 
 def purchase_fast_start():

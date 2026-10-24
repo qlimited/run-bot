@@ -118,7 +118,8 @@ On startup, the bot will:
    - **HP Extension / Power Jelly Boost / Double XP**: turn each top boost on or off on the purchase screen
    - **Auto Jump**: randomly make one or two jumps throughout a run, and time a jump to collect each item box
    - **Auto Add Friend**: accept friend requests and send new ones, 1–3 per main-menu visit, stopping while your friend list is full
-   - **Auto Gift Draw**: after each game, alternate between opening up to five Gift Draw boxes and sending lives; each gift screen is checked before the next tap
+   - **Send Hearts to Friends**: enable or disable sending lives from the friend list and mailbox (enabled by default)
+   - **Auto Gift Draw**: after each game, open up to five Gift Draw boxes; alternate with sending lives when both options are enabled
 3. Begin the automation loop
 
 ## Project Structure
