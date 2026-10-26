@@ -122,6 +122,8 @@ On startup, the bot will:
    - **Auto Gift Draw**: after each game, open up to five Gift Draw boxes; alternate with sending lives when both options are enabled
 3. Begin the automation loop
 
+After each game, the bot reads the final XP and Coin values from the Result screen and saves them per ADB device. The dashboard shows totals and recent games under **Game Results**. Results are stored locally in `gui/game_stats.sqlite3` and survive dashboard restarts. Reading the Result screen currently uses macOS Vision and the `swift` command; on other systems the game continues, but reward stats are not recorded.
+
 ## Project Structure
 
 ```

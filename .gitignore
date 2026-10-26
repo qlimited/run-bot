@@ -4,3 +4,4 @@ __pycache__/
 env/
 debug_screens/
 .DS_Store
+gui/game_stats.sqlite3*

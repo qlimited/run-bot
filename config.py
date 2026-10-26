@@ -328,10 +328,10 @@ TOP_BOOST_ON_MAX_HUE = 35
 JUMP_TAP_REGION = (105, 580, 230, 665)  # x1, y1, x2, y2
 JUMP_MIN_SEPARATION = 70                # px from each of the last JUMP_MEMORY taps
 JUMP_MEMORY = 5
-# Lognormal gaps cluster near the median with an occasional long pause, so there is no fixed rhythm.
-JUMP_INTERVAL_MEDIAN = 1.1
-JUMP_INTERVAL_SIGMA = 0.5
-JUMP_INTERVAL_BOUNDS = (0.6, 4.0)       # seconds between finished jump sequences
+# Frequent but irregular jumps: roughly twice the previous cadence, without long idle gaps.
+JUMP_INTERVAL_MEDIAN = 0.55
+JUMP_INTERVAL_SIGMA = 0.3
+JUMP_INTERVAL_BOUNDS = (0.35, 1.1)      # seconds between jump sequences
 JUMP_DOUBLE_CHANCE = 0.5               # otherwise make a single jump
 JUMP_DOUBLE_DELAY_BOUNDS = (0.2, 0.28) # seconds between the first and second taps
 COOKIE_X = 305                          # the cookie never moves horizontally

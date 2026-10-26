@@ -1,4 +1,5 @@
 import random
+import subprocess
 import time
 
 from adb import device_capture_screen, device_connect, device_reset_app, device_tap
@@ -58,6 +59,7 @@ from config import (
 )
 from detection import detect_stage, find_run_box, is_friend_info_open, load_templates
 from debug import save_debug_screen
+from game_stats import capture_result, save_result
 
 # -------------------
 # BOT OPTIONS
@@ -318,6 +320,16 @@ def main():
                 if jumper:
                     jumper.stop()
                     jumper = None
+                if not post_game_pending:
+                    try:
+                        reward = capture_result(DEVICE_IP, DEVICE_PORT)
+                        if reward is None:
+                            print("📊 Could not confirm final XP and Coins; this game was not recorded.")
+                        else:
+                            save_result(f"{DEVICE_IP}:{DEVICE_PORT}", reward["xp"], reward["coins"])
+                            print(f"📊 Game result: XP {reward['xp']:,} · Coins {reward['coins']:,}")
+                    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
+                        print(f"📊 Could not record game result: {exc}")
                 complete_finish()
                 post_game_pending = True
                 detection_group = "POST_GAME"

@@ -30,6 +30,8 @@ let startedAt = null;
 let finishedAt = null;
 let busy = false;
 let polling = false;
+let lastStatsAt = 0;
+let statsLoading = false;
 let optionsLoaded = false;
 let currentDevices = [];
 let pendingRemovalId = null;
@@ -520,6 +522,7 @@ function render(state) {
   migrateOldOptions(state);
   observeIssues(state.devices);
   if (!device) {
+    renderGameStats(null);
     selectedId = null;
     localStorage.removeItem(selectedKey);
     optionsLoaded = false;
@@ -550,6 +553,7 @@ function render(state) {
     localStorage.setItem(selectedKey, selectedId);
     loadOptions(selectedId);
     resetLogs();
+    lastStatsAt = 0;
     optionsLoaded = true;
   }
   renderDevices(state.devices);
@@ -584,6 +588,51 @@ function render(state) {
   for (const entry of device.logs) addLog(entry);
   lastLogId = device.latest_log_id;
   updateRuntime();
+  refreshGameStats();
+}
+
+function renderGameStats(stats) {
+  const format = (value) => Number(value || 0).toLocaleString('en-US');
+  $('gameStatsCount').textContent = `${format(stats?.count)} เกม`;
+  $('gameStatsXp').textContent = format(stats?.xp_total);
+  $('gameStatsCoins').textContent = format(stats?.coins_total);
+  const list = $('gameStatsList');
+  list.replaceChildren();
+  if (!stats?.recent?.length) {
+    const empty = document.createElement('div');
+    empty.className = 'game-stats-empty';
+    empty.textContent = 'ยังไม่มีผลเกมที่บันทึกไว้';
+    list.append(empty);
+    return;
+  }
+  for (const [index, entry] of stats.recent.entries()) {
+    const row = document.createElement('div');
+    row.className = 'game-stats-row';
+    const when = document.createElement('span');
+    const date = new Date(entry.finished_at * 1000).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' });
+    when.textContent = `เกม ${stats.count - index} · ${date}`;
+    const xp = document.createElement('strong');
+    xp.textContent = `XP +${format(entry.xp)}`;
+    const coins = document.createElement('strong');
+    coins.textContent = `Coin +${format(entry.coins)}`;
+    row.append(when, xp, coins);
+    list.append(row);
+  }
+}
+
+async function refreshGameStats() {
+  if (!selectedId || statsLoading || Date.now() - lastStatsAt < 5000) return;
+  const deviceId = selectedId;
+  statsLoading = true;
+  lastStatsAt = Date.now();
+  try {
+    const response = await fetch(`/api/stats?device=${encodeURIComponent(deviceId)}`, { cache: 'no-store' });
+    if (!response.ok) throw new Error('Could not load game stats');
+    const stats = await response.json();
+    if (selectedId === deviceId) renderGameStats(stats);
+  } catch {
+    lastStatsAt = 0;
+  } finally { statsLoading = false; }
 }
 
 function updateRuntime() {
@@ -615,6 +664,8 @@ function selectDevice(deviceId) {
   if (busy || deviceId === selectedId) return;
   saveOptions();
   selectedId = deviceId;
+  lastStatsAt = 0;
+  renderGameStats(null);
   localStorage.setItem(selectedKey, selectedId);
   loadOptions(deviceId);
   resetLogs();
