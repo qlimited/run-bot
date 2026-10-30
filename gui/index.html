@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/devices.css">
   <link rel="stylesheet" href="/delete.css">
+  <link rel="stylesheet" href="/game-stats.css">
   <script src="/app.js" defer></script>
 </head>
 <body>
@@ -17,6 +18,7 @@
       <div class="nav-heading">WORKSPACE</div>
       <a class="nav-item active" href="#overview"><span class="nav-icon">◈</span> Dashboard <span class="nav-indicator"></span></a>
       <a class="nav-item" href="#devices"><span class="nav-icon">▣</span> อุปกรณ์</a>
+      <a class="nav-item" href="#game-stats"><span class="nav-icon">◈</span> สถิติรายเกม</a>
       <a class="nav-item" href="#alerts"><span class="nav-icon">♢</span> แจ้งเตือน <span id="alertNavCount" class="alert-nav-count" hidden>0</span></a>
       <a class="nav-item" href="#screen"><span class="nav-icon">◫</span> จอสด</a>
       <a class="nav-item" href="#setup"><span class="nav-icon">⚙</span> ตั้งค่าการเล่น</a>
@@ -53,7 +55,8 @@
             <label class="option-row"><span class="option-symbol violet">✦</span><span class="option-text"><strong>Double XP</strong><small>เปิดใช้ Double XP ทุกรอบ</small></span><input id="doubleXp" type="checkbox"><span class="switch"></span></label>
             <label class="option-row"><span class="option-symbol mint">⤴</span><span class="option-text"><strong>Auto Jump</strong><small>สุ่มกระโดด 1 หรือ 2 ครั้งตลอดช่วงวิ่ง และกระโดดเก็บกล่อง</small></span><input id="autoJump" type="checkbox"><span class="switch"></span></label>
             <label class="option-row"><span class="option-symbol violet">☺</span><span class="option-text"><strong>Auto Add Friend</strong><small>หลังจบเกม รับคำขอและส่งคำขอเป็นเพื่อน 1–3 คน (หยุดเมื่อเพื่อนเต็ม)</small></span><input id="autoAddFriend" type="checkbox"><span class="switch"></span></label>
-            <label class="option-row"><span class="option-symbol amber">🎁</span><span class="option-text"><strong>Auto Gift Draw</strong><small>หลังจบเกม สลับกับส่งหัวใจ · เปิดไม่เกิน 5 กล่องต่อรอบ</small></span><input id="autoGiftDraw" type="checkbox"><span class="switch"></span></label>
+            <label class="option-row"><span class="option-symbol rose">♥</span><span class="option-text"><strong>ส่งหัวใจให้เพื่อน</strong><small>ส่งจากรายชื่อเพื่อนและกล่องจดหมาย</small></span><input id="sendFriendLives" type="checkbox"><span class="switch"></span></label>
+            <label class="option-row"><span class="option-symbol amber">🎁</span><span class="option-text"><strong>Auto Gift Draw</strong><small>หลังจบเกม สูงสุด 5 กล่อง · สลับเมื่อเปิดส่งหัวใจ</small></span><input id="autoGiftDraw" type="checkbox"><span class="switch"></span></label>
             </div>
           </section>
 
@@ -63,6 +66,12 @@
           <article class="stat-card"><div class="stat-icon pink">◇</div><div class="stat-label">CURRENT STAGE</div><div id="stageLabel" class="stat-value">—</div><div class="stat-foot">อัปเดตจาก log แบบอัตโนมัติ</div></article>
           <article class="stat-card"><div class="stat-icon blue">◷</div><div class="stat-label">RUN TIME</div><div id="runtimeLabel" class="stat-value mono">00:00:00</div><div class="stat-foot">เวลาทำงานในรอบนี้</div></article>
         </div>
+
+        <section id="game-stats" class="panel game-stats-panel" aria-labelledby="gameStatsTitle">
+          <div class="panel-heading"><div><div class="panel-overline">GAME RESULTS</div><h3 id="gameStatsTitle">สถิติหลังจบเกม</h3><p>XP และ Coin ของอุปกรณ์ที่เลือก · เก็บไว้บนเครื่องนี้</p></div><span id="gameStatsCount" class="count-pill">0 เกม</span></div>
+          <div class="game-stats-summary"><div><small>XP รวม</small><strong id="gameStatsXp">0</strong></div><div><small>Coin รวม</small><strong id="gameStatsCoins">0</strong></div></div>
+          <div id="gameStatsList" class="game-stats-list"><div class="game-stats-empty">ยังไม่มีผลเกมที่บันทึกไว้</div></div>
+        </section>
 
         <section id="devices" class="panel devices-panel"><div class="devices-heading"><div><div class="panel-overline">DEVICE FLEET</div><h3>ภาพรวมทุกเครื่อง <span id="deviceCount" class="count-pill">1</span></h3><p>ภาพย่อ สถานะ ADB และด่านล่าสุดของทุกเครื่อง · เลือกการ์ดเพื่อดูรายละเอียด</p></div><button id="showAddDevice" class="add-device-button" type="button">＋ เพิ่มอุปกรณ์</button></div><div id="deviceList" class="device-list"></div><div id="deviceEmpty" class="empty-device" hidden><span>▣</span><strong>ยังไม่มีอุปกรณ์</strong><small>กด “เพิ่มอุปกรณ์” เพื่อเริ่มใช้งาน</small></div><form id="addDeviceForm" class="add-device-form" hidden><div class="add-form-title">เพิ่มอุปกรณ์ ADB</div><div class="add-form-fields"><label>ชื่ออุปกรณ์<input id="newDeviceName" type="text" maxlength="40" placeholder="เช่น เครื่องที่ 2"></label><label>Device IP / Host<input id="newDeviceIp" type="text" required placeholder="192.168.1.10" autocomplete="off" spellcheck="false"></label><label>ADB Port<input id="newDevicePort" type="number" required min="1" max="65535" value="5555"></label></div><div class="add-form-actions"><button id="cancelAddDevice" class="text-button" type="button">ยกเลิก</button><button class="save-device-button" type="submit">เพิ่มอุปกรณ์</button></div></form></section>
 

@@ -26,6 +26,7 @@ DATA_FILE = Path(os.environ.get("COOKIERUN_DEVICES_FILE") or GUI_DIR / "devices.
 sys.path.insert(0, str(PROJECT_DIR))
 import config  # noqa: E402
 from adb import adb_executable  # noqa: E402
+from game_stats import get_results  # noqa: E402
 
 
 ASSETS = {
@@ -33,6 +34,7 @@ ASSETS = {
     "/styles.css": ("styles.css", "text/css; charset=utf-8"),
     "/devices.css": ("devices.css", "text/css; charset=utf-8"),
     "/delete.css": ("delete.css", "text/css; charset=utf-8"),
+    "/game-stats.css": ("game-stats.css", "text/css; charset=utf-8"),
     "/app.js": ("app.js", "text/javascript; charset=utf-8"),
 }
 HOST_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9.-]{0,252}$")
@@ -199,6 +201,7 @@ class BotController:
             answers.append("y" if options.get(key, True) else "n")
         answers.append("y" if options.get("auto_jump") else "n")
         answers.append("y" if options.get("auto_add_friend") else "n")
+        answers.append("y" if options.get("send_friend_lives", True) else "n")
         answers.append("y" if options.get("auto_gift_draw") else "n")
 
         with self.lock:
@@ -423,6 +426,13 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError:
                 after = 0
             self._json(200, registry.snapshot(query.get("device", [None])[0], after))
+            return
+        if url.path == "/api/stats":
+            try:
+                device = registry.get(parse_qs(url.query).get("device", [None])[0])
+                self._json(200, get_results(device.serial))
+            except ValueError as exc:
+                self._json(400, {"error": str(exc)})
             return
         asset = ASSETS.get(url.path)
         if asset is None:

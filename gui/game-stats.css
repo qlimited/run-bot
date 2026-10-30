@@ -1,0 +1,14 @@
+.game-stats-panel{margin:17px 0;padding:22px 24px}
+.game-stats-panel .panel-heading{padding:0;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.game-stats-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:17px 0}
+.game-stats-summary>div{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#242936;border:1px solid #363b4b;border-radius:12px;padding:13px 16px}
+.game-stats-summary small{color:#9fa6b9;font:400 12px Kanit,sans-serif}
+.game-stats-summary strong{color:#ffca81;font-size:20px;font-variant-numeric:tabular-nums}
+.game-stats-list{max-height:300px;overflow:auto}
+.game-stats-row{display:grid;grid-template-columns:minmax(140px,1fr) minmax(80px,auto) minmax(90px,auto);gap:12px;padding:10px 4px;border-top:1px solid #333746;font-size:12px;align-items:center}
+.game-stats-row span:first-child,.game-stats-empty{color:#9fa6b9}
+.game-stats-row strong{font-variant-numeric:tabular-nums;text-align:right}
+.game-stats-row strong:nth-child(2){color:#b7a1ff}
+.game-stats-row strong:nth-child(3){color:#ffca81}
+.game-stats-empty{font:400 12px Kanit,sans-serif;padding:14px 4px}
+@media(max-width:650px){.game-stats-panel{padding:16px}.game-stats-row{grid-template-columns:1fr auto auto;gap:7px;font-size:11px}.game-stats-summary strong{font-size:16px}}

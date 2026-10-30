@@ -118,8 +118,11 @@ On startup, the bot will:
    - **HP Extension / Power Jelly Boost / Double XP**: turn each top boost on or off on the purchase screen
    - **Auto Jump**: randomly make one or two jumps throughout a run, and time a jump to collect each item box
    - **Auto Add Friend**: accept friend requests and send new ones, 1–3 per main-menu visit, stopping while your friend list is full
-   - **Auto Gift Draw**: after each game, alternate between opening up to five Gift Draw boxes and sending lives; each gift screen is checked before the next tap
+   - **Send Hearts to Friends**: enable or disable sending lives from the friend list and mailbox (enabled by default)
+   - **Auto Gift Draw**: after each game, open up to five Gift Draw boxes; alternate with sending lives when both options are enabled
 3. Begin the automation loop
+
+After each game, the bot reads the final XP and Coin values from the Result screen and saves them per ADB device. The dashboard shows totals and recent games under **Game Results**. Results are stored locally in `gui/game_stats.sqlite3` and survive dashboard restarts. Reading the Result screen currently uses macOS Vision and the `swift` command; on other systems the game continues, but reward stats are not recorded.
 
 ## Project Structure
 
